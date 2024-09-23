@@ -1,0 +1,42 @@
+name: login_signup
+description: A new Flutter project.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.1.0 <4.0.0'
+
+dependencies:
+  carousel_slider: ^5.0.0
+  cupertino_icons: ^1.0.2
+  fl_chart: ^0.69.0
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.2.1
+  http: ^1.2.2
+  icons_plus: ^5.0.0
+  image_picker: ^1.1.2
+  google_ml_kit: ^0.18.1
+  geolocator: ^13.0.1
+  permission_handler: ^11.3.1
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  mime: ^1.0.2
+  http_parser: 4.0.2
+  shared_preferences: ^2.0.13
+
+
+
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
+
+    
+    
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
