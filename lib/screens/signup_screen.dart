@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:login_signup/screens/signin_screen.dart';
-import 'package:login_signup/theme/theme.dart';
-import 'package:login_signup/widgets/custom_scaffold.dart';
+import 'package:hrm/screens/signin_screen.dart';
+import 'package:hrm/theme/theme.dart';
+import 'package:hrm/widgets/custom_scaffold.dart';
+import 'package:hrm/api/api_service.dart'; // Pastikan jalur impor sesuai dengan struktur project-mu
+
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -26,65 +28,68 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _noHandphoneController = TextEditingController();
   final TextEditingController _alamatController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   Future<void> _register() async {
-    if (_formSignupKey.currentState!.validate() && agreePersonalData) {
-      setState(() {
-        isLoading = true;
-        errorMessage = null;
-      });
+  if (_formSignupKey.currentState!.validate() && agreePersonalData) {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
 
-      final response = await http.post(
-        Uri.parse('http://192.168.200.51:8000/api/register'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, String>{
-          'nama_karyawan': _namaKaryawanController.text,
-          'nik': _nikController.text,
-          'email': _emailController.text,
-          'no_handphone': _noHandphoneController.text,
-          'alamat': _alamatController.text,
-          'password': _passwordController.text,
-          'password_confirmation': _confirmPasswordController.text,
-        }),
-      );
+    final body = {
+      'nama_karyawan': _namaKaryawanController.text,
+      'nik': _nikController.text,
+      'email': _emailController.text,
+      'no_handphone': _noHandphoneController.text,
+      'alamat': _alamatController.text,
+      'password': _passwordController.text,
+      'password_confirmation': _confirmPasswordController.text,
+    };
 
-      setState(() {
-        isLoading = false;
-      });
+    // Header untuk permintaan
+    final headers = {
+      'Content-Type': 'application/json',
+    };
 
-      if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration successful'),
-          ),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const SignInScreen(),
-          ),
-        );
-      } else {
-        final Map<String, dynamic> responseData = jsonDecode(response.body);
-        setState(() {
-          errorMessage = responseData['message'] ?? 'Registration failed';
-        });
-      }
-    } else if (!agreePersonalData) {
+    // Panggil metode postRequest dari ApiService
+    final response = await ApiService.postRequest('register', headers, body);
+
+    setState(() {
+      isLoading = false;
+    });
+
+    if (response.statusCode == 201) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please agree to the processing of personal data'),
+          content: Text('Registration successful'),
         ),
       );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const SignInScreen(),
+        ),
+      );
+    } else {
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+      setState(() {
+        errorMessage = responseData['message'] ?? 'Registration failed';
+      });
     }
+  } else if (!agreePersonalData) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Please agree to the processing of personal data'),
+      ),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
+    var screenSize = MediaQuery.of(context).size;  // Ambil ukuran layar untuk menyesuaikan padding
+
     return CustomScaffold(
       child: Column(
         children: [
@@ -97,7 +102,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
           Expanded(
             flex: 7,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(25.0, 50.0, 25.0, 20.0),
+              padding: EdgeInsets.fromLTRB(
+                screenSize.width * 0.05, // padding kiri-kanan dinamis
+                50.0, // padding atas
+                screenSize.width * 0.05, // padding kiri-kanan dinamis
+                20.0, // padding bawah
+              ),
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
@@ -112,7 +122,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        'Get Started',
+                        'Sign Up',
                         style: TextStyle(
                           fontSize: 30.0,
                           fontWeight: FontWeight.w900,
@@ -287,24 +297,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter Password';
+                          } else if (value.length < 6) {
+                            return 'Password must be at least 6 characters';
                           }
                           return null;
                         },
                         decoration: InputDecoration(
                           label: const Text('Password'),
                           hintText: 'Enter Password',
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              showPassword
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                showPassword = !showPassword;
-                              });
-                            },
-                          ),
                           hintStyle: const TextStyle(
                             color: Colors.black26,
                           ),
@@ -320,8 +320,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                             borderRadius: BorderRadius.circular(10),
                           ),
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                showPassword = !showPassword;
+                              });
+                            },
+                          icon: Icon(
+                            showPassword ? Icons.visibility : Icons.visibility_off,
+                          ),
                         ),
                       ),
+                    ),
+
                       const SizedBox(
                         height: 25.0,
                       ),
@@ -331,28 +342,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         obscuringCharacter: '*',
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please confirm Password';
+                            return 'Confirm Password is required';
+                          } else if (value.length < 6) {
+                            return 'Confirm Password must be at least 6 characters';
+                          } else if (value != _passwordController.text) {
+                            return 'Password does not match';
                           }
-                          if (value != _passwordController.text) {
-                            return 'Passwords do not match';
-                          }
-                          return null;
+                          return null; 
                         },
                         decoration: InputDecoration(
                           label: const Text('Confirm Password'),
                           hintText: 'Confirm Password',
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              showConfirmPassword
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                showConfirmPassword = !showConfirmPassword;
-                              });
-                            },
-                          ),
                           hintStyle: const TextStyle(
                             color: Colors.black26,
                           ),
@@ -368,116 +368,66 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                             borderRadius: BorderRadius.circular(10),
                           ),
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                showConfirmPassword = !showConfirmPassword;
+                              });
+                            },
+                            icon: Icon(
+                              showConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(
                         height: 25.0,
                       ),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           Checkbox(
                             value: agreePersonalData,
-                            onChanged: (bool? value) {
+                            onChanged: (value) {
                               setState(() {
                                 agreePersonalData = value!;
                               });
                             },
-                            activeColor: lightColorScheme.primary,
                           ),
                           const Text(
-                            'Saya setuju dengan pemrosesan',
-                            style: TextStyle(
-                              color: Colors.black45,
-                            ),
-                          ),
-                          Text(
-                            'Data pribadi',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: lightColorScheme.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 25.0,
-                      ),
-                      isLoading
-                          ? const CircularProgressIndicator()
-                          : SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: _register,
-                                child: const Text('Sign up'),
-                              ),
-                            ),
-                      if (errorMessage != null) ...[
-                        const SizedBox(height: 20.0),
-                        Text(
-                          errorMessage!,
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      ],
-                      const SizedBox(
-                        height: 30.0,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Divider(
-                              thickness: 0.7,
-                              color: Colors.grey.withOpacity(0.5),
-                            ),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 0,
-                              horizontal: 10,
-                            ),
-                          ),
-                          Expanded(
-                            child: Divider(
-                              thickness: 0.7,
-                              color: Colors.grey.withOpacity(0.5),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 30.0,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            'Sudah punya akun? ',
-                            style: TextStyle(
-                              color: Colors.black45,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (e) => const SignInScreen(),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              'Sign in',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: lightColorScheme.primary,
-                              ),
-                            ),
+                            'Saya setuju dengan pemrosesan Data',
                           ),
                         ],
                       ),
                       const SizedBox(
                         height: 20.0,
                       ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : _register,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.all(16),
+                          ),
+                          child: isLoading
+                              ? const CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                )
+                              : const Text(
+                                  'Sign up',
+                                  style: TextStyle(fontSize: 18.0),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      if (errorMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16.0),
+                          child: Text(
+                            errorMessage!,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ),
                     ],
                   ),
                 ),

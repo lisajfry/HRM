@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:login_signup/screens/signin_screen.dart';
-import 'package:login_signup/screens/signup_screen.dart'; // Import halaman register
-import 'package:login_signup/theme/theme.dart';
+import 'package:hrm/screens/signin_screen.dart';
+import 'package:hrm/screens/signup_screen.dart'; // Import halaman register
+import 'package:hrm/theme/theme.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

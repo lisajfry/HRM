@@ -1,6 +1,6 @@
 {
-    "name": "login_signup",
-    "short_name": "login_signup",
+    "name": "hrm",
+    "short_name": "hrm",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

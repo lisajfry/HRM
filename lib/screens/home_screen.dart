@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:login_signup/screens/absen_screen.dart'; // Import AbsenScreen
+import 'package:hrm/screens/absensi_screen.dart'; // Import AbsenScreen
+import 'package:hrm/screens/profile_screen.dart'; // Import AbsenScreen
+
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -11,36 +13,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.primary,
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundImage: AssetImage('assets/images/profile.png'),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text('Lili', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                Text(
-                  'Teknologi Informasi',
-                  style: TextStyle(fontSize: 12, color: Colors.white70),
-                ),
-              ],
-            ),
-          ],
-        ),
-        leading: Builder(
-          builder: (context) {
-            return IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            );
-          },
-        ),
-      ),
+         ),
      
       body: SingleChildScrollView(
         child: Padding(
@@ -71,8 +44,8 @@ class HomeScreen extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildRequestItem('Absensi', Icons.qr_code, context),
-                      _buildRequestItem('Payroll', Icons.attach_money, context),
+                      _buildLayananItem('Absensi', Icons.qr_code, context),
+                      _buildLayananItem('Payroll', Icons.attach_money, context),
                       _buildLayananItem('Rekap Absensi', Icons.description, context),
                       _buildLayananItem('Kinerja', Icons.task, context),
 
@@ -118,12 +91,12 @@ class HomeScreen extends StatelessWidget {
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(30),
           topRight: Radius.circular(30),
-          bottomLeft: Radius.circular(10), 
+          bottomLeft: Radius.circular(10),
           bottomRight: Radius.circular(10),
         ),
         child: Material(
           shadowColor: Colors.grey,
-          elevation: 8, 
+          elevation: 8,
           child: BottomNavigationBar(
             selectedItemColor: Theme.of(context).colorScheme.primary,
             unselectedItemColor: Colors.grey,
@@ -135,7 +108,13 @@ class HomeScreen extends StatelessWidget {
                 case 2: // Index for "Scan Absensi"
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => AbsenScreen()), // Navigasi ke AbsenScreen
+                    MaterialPageRoute(builder: (context) => AbsensiScreen()),
+                  );
+                  break;
+                case 4: // Index for "My Profile"
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ProfileScreen()),
                   );
                   break;
                 default:
@@ -160,7 +139,6 @@ class HomeScreen extends StatelessWidget {
                 icon: Icon(Icons.business),
                 label: 'Task',
               ),
-              
               BottomNavigationBarItem(
                 icon: Icon(Icons.person),
                 label: 'My Profile',
@@ -183,12 +161,23 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildLayananItem(String title, IconData icon, BuildContext context) {
-    return Column(
+  return GestureDetector(
+    onTap: () {
+      if (title == 'Rekap Absensi') {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => AbsensiScreen()), // Navigasi ke AbsensiScreen
+        );
+      }
+    },
+    child: Column(
       children: [
         Icon(icon, size: 30, color: Theme.of(context).colorScheme.primary),
         const SizedBox(height: 8),
-        Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
+        Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
       ],
-    );
-  }
+    ),
+  );
+}
+
 }

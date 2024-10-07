@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:login_signup/screens/splash_screen.dart';
-import 'package:login_signup/theme/theme.dart';
+import 'package:hrm/screens/splash_screen.dart';
+import 'package:hrm/theme/theme.dart';
 
 void main() {
   runApp(const MyApp());
