@@ -6,7 +6,7 @@ import 'package:mime/mime.dart';
 
 class ApiService {
   // Base URL of your API server
-  static const String _baseUrl = 'http://192.168.200.50:8000/api/';
+  static const String _baseUrl = 'http://192.168.200.27:8000/api/';
 
   static String get baseUrl => _baseUrl;
 

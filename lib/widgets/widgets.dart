@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:hrm/screens/face_recognition_screen.dart'; // Pastikan jalur ini benar
-import 'package:hrm/utils/utils.dart'; // Pastikan jalur ini benar
+import 'package:hrm/screens/face_recognition_screen.dart'; 
+import 'package:hrm/utils/utils.dart'; 
 import 'package:image_picker/image_picker.dart';
 import 'dart:io'; 
+import 'package:hrm/screens/lembur_screen.dart'; 
+import 'package:hrm/model/TotalLembur.dart'; 
+import 'package:provider/provider.dart';
 
 
+// Fungsi untuk membangun bagian profil
 Widget buildProfileSection(Map<String, dynamic> karyawanData, DateTime currentDateTime) {
   return Row(
     children: [
@@ -30,6 +34,7 @@ Widget buildProfileSection(Map<String, dynamic> karyawanData, DateTime currentDa
   );
 }
 
+// Fungsi untuk membangun segmentasi absensi
 Widget buildAttendanceSegment() {
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -52,7 +57,8 @@ Widget buildAttendanceSegment() {
   );
 }
 
- Widget buildActionButtons(BuildContext context) {
+// Fungsi untuk membangun tombol aksi
+Widget buildActionButtons(BuildContext context) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceAround,
     children: [
@@ -62,17 +68,17 @@ Widget buildAttendanceSegment() {
             final picker = ImagePicker();
             final pickedFile = await picker.pickImage(source: ImageSource.camera);
             if (pickedFile != null) {
-              String currentTime = DateFormat('HH:mm').format(DateTime.now()); // Get the current time
-              String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now()); // Get the current date
+              String currentTime = DateFormat('HH:mm').format(DateTime.now());
+              String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => FaceRecognitionScreen(
-                    action: 'Clock In', // For Clock In button
+                    action: 'Clock In',
                     pickedImage: pickedFile,
-                    time: currentTime,  // Pass the current time
-                    date: currentDate,  // Pass the current date
+                    time: currentTime,
+                    date: currentDate,
                   ),
                 ),
               );
@@ -91,22 +97,31 @@ Widget buildAttendanceSegment() {
       Expanded(
         child: ElevatedButton(
           onPressed: () async {
-            final picker = ImagePicker();
-            final pickedFile = await picker.pickImage(source: ImageSource.camera);
-            if (pickedFile != null) {
-              String currentTime = DateFormat('HH:mm').format(DateTime.now()); // Get the current time
-              String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now()); // Get the current date
+            try {
+              final picker = ImagePicker();
+              final pickedFile = await picker.pickImage(source: ImageSource.camera);
+              
+              if (pickedFile != null) {
+                String currentTime = DateFormat('HH:mm').format(DateTime.now());
+                String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => FaceRecognitionScreen(
-                    action: 'Clock Out', // For Clock Out button
-                    pickedImage: pickedFile,
-                    time: currentTime,  // Pass the current time
-                    date: currentDate,  // Pass the current date
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FaceRecognitionScreen(
+                      action: 'Clock Out',
+                      pickedImage: pickedFile,
+                      time: currentTime,
+                      date: currentDate,
+                    ),
                   ),
-                ),
+                );
+              } else {
+                throw 'Image not selected';
+              }
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to clock out: $e')),
               );
             }
           },
@@ -122,9 +137,8 @@ Widget buildAttendanceSegment() {
     ],
   );
 }
-
-  
-  Widget buildAttendanceSummary() {
+Widget buildAttendanceSummary(BuildContext context) {
+  final totalLembur = Provider.of<TotalLemburProvider>(context).totalLembur; // Mengambil total lembur dari provider
   return Card(
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(10),
@@ -135,20 +149,26 @@ Widget buildAttendanceSegment() {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildInfoCard('Total Hadir', '20', Icons.check_circle_outline, Colors.blue),
-          _buildInfoCard('Total Izin', '2', Icons.description_outlined, Colors.blue),
-          _buildInfoCard('Total Sakit', '1', Icons.sick_outlined, Colors.blue),
-          _buildInfoCard('Total Alfa', '0', Icons.remove_circle_outline, Colors.blue),
+          _buildInfoCard('Total Hadir', '20', Icons.check_circle_outline, Colors.blue, context),
+          _buildInfoCard('Total Izin', '2', Icons.description_outlined, Colors.blue, context),
+          _buildInfoCard('Total Lembur', totalLembur.toString(), Icons.access_time, Colors.blue, context), // Gunakan total lembur dari provider
+          _buildInfoCard('Total Alfa', '0', Icons.remove_circle_outline, Colors.blue, context),
         ],
       ),
     ),
   );
 }
 
-Widget _buildInfoCard(String title, String count, IconData icon, Color iconColor) {
+// Fungsi untuk membangun kartu informasi
+Widget _buildInfoCard(String title, String count, IconData icon, Color iconColor, BuildContext context) {
   return GestureDetector(
     onTap: () {
-      // Aksi ketika card di-tap
+      if (title == 'Total Lembur') {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => LemburScreen()), // Navigasi ke LemburScreen
+        );
+      }
     },
     child: Column(
       children: [
@@ -161,6 +181,3 @@ Widget _buildInfoCard(String title, String count, IconData icon, Color iconColor
     ),
   );
 }
-
-
-

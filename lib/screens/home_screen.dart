@@ -1,21 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:hrm/screens/absensi_screen.dart'; // Import AbsenScreen
-import 'package:hrm/screens/profile_screen.dart'; // Import AbsenScreen
+import 'package:hrm/screens/absensi_screen.dart';
+import 'package:hrm/screens/profile_screen.dart';
+import 'package:hrm/screens/izin_screen.dart';
+import 'package:hrm/screens/rekap_absensi.dart';
+import 'package:hrm/screens/dinas_luar_kota_screen.dart';
+import 'package:hrm/screens/payroll_screen.dart';
+import 'package:hrm/screens/navigation.dart';
 
-
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0; // Set default to "Home"
+
+  final List<Widget> _screens = [
+    HomeScreenContent(),
+    IzinScreen(),
+    AbsensiScreen(),
+    DinasLuarKotaScreen(),
+    ProfileScreen(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _screens,
+      ),
+      bottomNavigationBar: CustomBottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+      ),
+    );
+  }
+}
+
+// Widget terpisah untuk konten dashboard
+class HomeScreenContent extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
       appBar: AppBar(
+        title: const Text('Dashboard'),
         backgroundColor: Theme.of(context).colorScheme.primary,
-         ),
-     
-      body: SingleChildScrollView(
+      ),
+      body: SingleChildScrollView(  // Membuat body menjadi scrollable
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -46,17 +88,15 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       _buildLayananItem('Absensi', Icons.qr_code, context),
                       _buildLayananItem('Payroll', Icons.attach_money, context),
-                      _buildLayananItem('Rekap Absensi', Icons.description, context),
+                      _buildLayananItem('Riwayat Absensi', Icons.description, context),
                       _buildLayananItem('Kinerja', Icons.task, context),
-
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-             
               SizedBox(
-                height: 250,
+                height: 250,  // Pastikan grafik tetap sesuai ukuran
                 child: BarChart(
                   BarChartData(
                     gridData: FlGridData(show: true),
@@ -82,102 +122,47 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-          bottomLeft: Radius.circular(10),
-          bottomRight: Radius.circular(10),
-        ),
-        child: Material(
-          shadowColor: Colors.grey,
-          elevation: 8,
-          child: BottomNavigationBar(
-            selectedItemColor: Theme.of(context).colorScheme.primary,
-            unselectedItemColor: Colors.grey,
-            showSelectedLabels: true,
-            showUnselectedLabels: true,
-            currentIndex: 2, // Default is set to "Scan Absensi"
-            onTap: (int index) {
-              switch (index) {
-                case 2: // Index for "Scan Absensi"
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => AbsensiScreen()),
-                  );
-                  break;
-                case 4: // Index for "My Profile"
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ProfileScreen()),
-                  );
-                  break;
-                default:
-                  // Add other navigation logic here if needed
-                  break;
-              }
-            },
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.history),
-                label: 'Transaksi',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.qr_code_scanner),
-                label: 'Scan Absensi',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.business),
-                label: 'Task',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person),
-                label: 'My Profile',
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRequestItem(String title, IconData icon, BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, size: 40, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(height: 8),
-        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-      ],
     );
   }
 
   Widget _buildLayananItem(String title, IconData icon, BuildContext context) {
-  return GestureDetector(
-    onTap: () {
-      if (title == 'Rekap Absensi') {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => AbsensiScreen()), // Navigasi ke AbsensiScreen
-        );
-      }
-    },
-    child: Column(
-      children: [
-        Icon(icon, size: 30, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(height: 8),
-        Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-      ],
-    ),
-  );
-}
-
+    return GestureDetector(
+      onTap: () {
+        if (title == 'Absensi') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => AbsensiScreen()),
+          );
+        } else if (title == 'Payroll') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => PayrollScreen()),
+          );
+        } else if (title == 'Riwayat Absensi') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => RekapAbsensiScreen()),
+          );
+        } else if (title == 'Dinas Luar Kota') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => DinasLuarKotaScreen()),
+          );
+        }
+      },
+      child: Column(
+        children: [
+          Icon(icon, size: 30, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(height: 8),
+          Text(title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
 }

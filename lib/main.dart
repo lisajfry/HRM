@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hrm/screens/splash_screen.dart';
 import 'package:hrm/theme/theme.dart';
+import 'package:provider/provider.dart';
+import 'package:hrm/model/TotalLembur.dart';
 
 void main() {
   runApp(const MyApp());
@@ -9,14 +11,16 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: lightMode,
-      home: const SplashScreen(),
+    return ChangeNotifierProvider(
+      create: (context) => TotalLemburProvider(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'HRM App',
+        theme: lightMode,
+        home: const SplashScreen(),
+      ),
     );
   }
 }

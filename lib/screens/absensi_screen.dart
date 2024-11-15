@@ -4,9 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hrm/api/api_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:hrm/screens/face_recognition_screen.dart';
+import 'package:hrm/screens/location_office_screen.dart'; // Update this import
 import 'package:hrm/utils/utils.dart';
 import 'package:hrm/widgets/widgets.dart';
+import 'package:provider/provider.dart';
+import 'navigation.dart';
+
 
 class AbsensiScreen extends StatefulWidget {
   @override
@@ -79,12 +82,43 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
                   SizedBox(height: 20),
                   buildAttendanceSegment(),
                   SizedBox(height: 20),
-                  buildActionButtons(context),
+                  buildActionButtons(context), // Assuming the buttons are here
                   SizedBox(height: 20),
-                  buildAttendanceSummary(),
+                  buildAttendanceSummary(context),
                 ],
               ),
             ),
+    );
+  }
+
+  Widget buildActionButtons(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => LocationOfficeScreen(), // Update navigation target
+              ),
+            );
+          },
+          child: const Text('Clock In'),
+        ),
+        SizedBox(width: 20),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => LocationOfficeScreen(), // Update navigation target
+              ),
+            );
+          },
+          child: const Text('Clock Out'),
+        ),
+      ],
     );
   }
 }

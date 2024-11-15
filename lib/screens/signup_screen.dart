@@ -23,6 +23,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String? errorMessage;
 
   final TextEditingController _namaKaryawanController = TextEditingController();
+    final TextEditingController _nipController = TextEditingController();
   final TextEditingController _nikController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _noHandphoneController = TextEditingController();
@@ -39,7 +40,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     final body = {
       'nama_karyawan': _namaKaryawanController.text,
-      'nik': _nikController.text,
+      'nip': _nipController.text,
+      'nik': _nikController.text, 
       'email': _emailController.text,
       'no_handphone': _noHandphoneController.text,
       'alamat': _alamatController.text,
@@ -164,17 +166,49 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         height: 25.0,
                       ),
                       TextFormField(
-                        controller: _nikController,
+                        controller: _nipController,
                         keyboardType: TextInputType.number,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Masukkan No Induk Karyawan';
+                            return 'Masukkan No Induk Pegawai';
                           }
                           return null;
                         },
                         decoration: InputDecoration(
-                          label: const Text('No Induk Karyawan'),
-                          hintText: 'No Induk Karyawan',
+                          label: const Text('No Induk Pegawai'),
+                          hintText: 'No Induk Pegawai',
+                          hintStyle: const TextStyle(
+                            color: Colors.black26,
+                          ),
+                          border: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                              color: Colors.black12,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                              color: Colors.black12,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 25.0,
+                      ),
+                      TextFormField(
+                        controller: _nikController,
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Masukkan No Induk Kependudukan';
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          label: const Text('No Induk Kependudukan'),
+                          hintText: 'No Induk Kependudukan',
                           hintStyle: const TextStyle(
                             color: Colors.black26,
                           ),

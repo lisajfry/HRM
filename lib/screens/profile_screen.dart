@@ -156,93 +156,154 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : karyawanData != null
-              ? SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Center(
- child: CircleAvatar(
-   radius: 60,
-   backgroundColor: Colors.grey.shade300,
-   backgroundImage: _avatar != null
-       ? FileImage(_avatar!)
-       : karyawanData?['avatar'] != null && karyawanData!['avatar'].isNotEmpty
-           ? NetworkImage('${ApiService.baseUrl}storage/${karyawanData!['avatar']}')
-           : const AssetImage('assets/images/profile.png') as ImageProvider,
- ),
-),
-                      const SizedBox(height: 20),
-                      Text(
-                        karyawanData?['nama_karyawan'] ?? 'Nama tidak tersedia',
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        karyawanData?['email'] ?? 'Email tidak tersedia',
-                        style: const TextStyle(fontSize: 16, color: Colors.grey),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 30),
-                      _buildContactInfo(),
-                    ],
+    ? const Center(child: CircularProgressIndicator())
+    : karyawanData != null
+        ? SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Avatar Section
+                Center(
+                  child: CircleAvatar(
+                    radius: 60,
+                    backgroundColor: Colors.grey.shade300,
+                    backgroundImage: _avatar != null
+                        ? FileImage(_avatar!)
+                        : karyawanData?['avatar'] != null && karyawanData!['avatar'].isNotEmpty
+                            ? NetworkImage('${ApiService.baseUrl}storage/${karyawanData!['avatar']}')
+                            : const AssetImage('assets/images/profile.png') as ImageProvider,
                   ),
-                )
-              : const Center(child: Text('Karyawan not found')),
+                ),
+                const SizedBox(height: 20), // Spacing
+                // Contact Information Section
+                _buildContactInfo(), // Memanggil widget contact info
+              ],
+            ),
+          )
+        : const Center(child: Text('Karyawan not found')),
+
     );
   }
 
   Widget _buildContactInfo() {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Contact Information',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const Divider(height: 20, thickness: 1, color: Colors.grey),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                const Icon(Icons.phone, color: Colors.blue),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Phone: ${karyawanData?['no_handphone'] ?? 'No telepon tidak tersedia'}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
+  return Card(
+    elevation: 3,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Contact Information',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const Divider(height: 20, thickness: 1, color: Colors.grey),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(Icons.work, color: Colors.blue), // Icon untuk Jabatan
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Jabatan: ${karyawanData?['nama_jabatan'] ?? 'Jabatan tidak tersedia'}',
+                  style: const TextStyle(fontSize: 16),
                 ),
-              ],
-            ),
-            const Divider(height: 20, thickness: 1, color: Colors.grey),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                const Icon(Icons.home, color: Colors.green),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Address: ${karyawanData?['alamat'] ?? 'Alamat tidak tersedia'}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
+              ),
+            ],
+          ),
+          const Divider(height: 20, thickness: 1, color: Colors.grey),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(Icons.assignment_ind, color: Colors.blue), // Icon for NIP
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'NIP: ${karyawanData?['nip'] ?? 'NIP tidak tersedia'}',
+                  style: const TextStyle(fontSize: 16),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+          const Divider(height: 20, thickness: 1, color: Colors.grey),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(Icons.assignment_ind, color: Colors.blue), // Icon for NIK
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'NIK: ${karyawanData?['nik'] ?? 'NIK tidak tersedia'}',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 20, thickness: 1, color: Colors.grey),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(Icons.person, color: Colors.blue), // Icon for Name
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Name: ${karyawanData?['nama_karyawan'] ?? 'Nama Karyawan tidak tersedia'}',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 20, thickness: 1, color: Colors.grey),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(Icons.email, color: Colors.blue), // Icon for Email
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Email: ${karyawanData?['email'] ?? 'Email tidak tersedia'}',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 20, thickness: 1, color: Colors.grey),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(Icons.phone, color: Colors.blue), // Icon for Phone
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Phone: ${karyawanData?['no_handphone'] ?? 'No telepon tidak tersedia'}',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 20, thickness: 1, color: Colors.grey),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(Icons.home, color: Colors.green), // Icon for Address
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Address: ${karyawanData?['alamat'] ?? 'Alamat tidak tersedia'}',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
  Future<void> _fetchKaryawanData() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -263,26 +324,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'Content-Type': 'application/json', // Opsional, tergantung kebutuhan API
     };
 
-    // Menggunakan getRequest dengan dua argumen: endpoint dan headers
     final response = await ApiService.getRequest('profile', headers);
+print(response.body);  // Log untuk melihat respons dari server
+
 
     if (response.statusCode == 200) {
-      setState(() {
-        karyawanData = json.decode(response.body)['profile'];
-
-        if (karyawanData?['avatar'] != null && karyawanData!['avatar'].isNotEmpty) {
-          final avatarUrl = '${ApiService.baseUrl}storage/${karyawanData!['avatar']}';
-          prefs.setString('avatar_path', avatarUrl); // Simpan URL avatar
-        }
-
-        isLoading = false;
-      });
-    } else {
-      _showMessage('Failed to fetch profile data', isError: true);
-      setState(() {
-        isLoading = false;
-      });
+  setState(() {
+    karyawanData = json.decode(response.body)['profile'];
+    print(karyawanData);  // Tambahkan ini untuk memeriksa data
+    
+    // Simpan avatar jika ada
+    if (karyawanData?['avatar'] != null && karyawanData!['avatar'].isNotEmpty) {
+      final avatarUrl = '${ApiService.baseUrl}storage/${karyawanData!['avatar']}';
+      prefs.setString('avatar_path', avatarUrl); // Simpan URL avatar
     }
+    
+    isLoading = false;
+  });
+} else {
+  _showMessage('Failed to fetch profile data', isError: true);
+  setState(() {
+    isLoading = false;
+  });
+}
+
+    
   } catch (e) {
     _showMessage('Error fetching data: $e', isError: true);
     setState(() {
@@ -294,11 +360,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _updateProfile(Map<String, String> updatedData) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? token = prefs.getString('access_token');
+if (token == null) {
+  _showMessage('Token is missing', isError: true);
+  setState(() {
+    isLoading = false;
+  });
+  return;
+}
 
-    if (token == null) {
-      _showMessage('No token found', isError: true);
-      return;
-    }
 
     try {
       final response = await ApiService.putRequest('profile/update', updatedData, token);
