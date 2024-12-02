@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:hrm/screens/absensi_screen.dart';
+import 'package:hrm/screens/lembur_screen.dart';
 import 'package:hrm/screens/profile_screen.dart';
 import 'package:hrm/screens/izin_screen.dart';
 import 'package:hrm/screens/rekap_absensi.dart';
@@ -86,7 +87,7 @@ class HomeScreenContent extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildLayananItem('Absensi', Icons.qr_code, context),
+                      _buildLayananItem('Lembur', Icons.timer, context),
                       _buildLayananItem('Payroll', Icons.attach_money, context),
                       _buildLayananItem('Riwayat Absensi', Icons.description, context),
                       _buildLayananItem('Kinerja', Icons.task, context),
@@ -132,10 +133,10 @@ class HomeScreenContent extends StatelessWidget {
   Widget _buildLayananItem(String title, IconData icon, BuildContext context) {
     return GestureDetector(
       onTap: () {
-        if (title == 'Absensi') {
+        if (title == 'Lembur') {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => AbsensiScreen()),
+            MaterialPageRoute(builder: (context) => LemburScreen()),
           );
         } else if (title == 'Payroll') {
           Navigator.pushReplacement(

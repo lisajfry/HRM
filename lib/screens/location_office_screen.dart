@@ -15,7 +15,7 @@ class LocationOfficeScreen extends StatefulWidget {
 class _LocationOfficeScreenState extends State<LocationOfficeScreen> {
   GoogleMapController? _mapController;
   Position? _currentPosition;
-  final LatLng _officeLocation = LatLng(-7.635828594663169, 111.54255116931424); // Lokasi kantor
+  final LatLng _officeLocation = LatLng(-7.63682815361972, 111.54260480768411); // Lokasi kantor
   bool _isWithinOfficeRange = false;
 
   @override

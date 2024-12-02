@@ -3,7 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PayrollService {
-  final String _baseUrl = 'http://192.168.200.27:8000/api'; // Ganti dengan URL API Anda
+  final String _baseUrl = 'http://192.168.200.33:8000/api'; // Ganti dengan URL API Anda
+
 
   Future<Map<String, dynamic>> fetchPayrollSummary() async {
     try {

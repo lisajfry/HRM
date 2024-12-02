@@ -5,7 +5,7 @@ import 'package:hrm/screens/signin_screen.dart';
 import 'package:hrm/theme/theme.dart';
 import 'package:hrm/widgets/custom_scaffold.dart';
 import 'package:hrm/api/api_service.dart'; // Pastikan jalur impor sesuai dengan struktur project-mu
-
+import 'package:device_info_plus/device_info_plus.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -31,55 +31,112 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
 
-  Future<void> _register() async {
+  Future<String?> _getDeviceCode() async {
+  DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+  AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+  return androidInfo.id; // Gunakan androidInfo.id sebagai pengganti androidId
+}
+
+
+void _showAlertDialog(String title, String message) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+Future<void> _register() async { 
+  // Validasi input
   if (_formSignupKey.currentState!.validate() && agreePersonalData) {
     setState(() {
       isLoading = true;
       errorMessage = null;
     });
 
-    final body = {
-      'nama_karyawan': _namaKaryawanController.text,
-      'nip': _nipController.text,
-      'nik': _nikController.text, 
-      'email': _emailController.text,
-      'no_handphone': _noHandphoneController.text,
-      'alamat': _alamatController.text,
-      'password': _passwordController.text,
-      'password_confirmation': _confirmPasswordController.text,
-    };
+    try {
+      // Dapatkan device code
+      String? deviceCode = await _getDeviceCode();
 
-    // Header untuk permintaan
-    final headers = {
-      'Content-Type': 'application/json',
-    };
+      // Data yang akan dikirim ke server
+      final body = {
+        'nama_karyawan': _namaKaryawanController.text,
+        'nip': _nipController.text,
+        'nik': _nikController.text, 
+        'email': _emailController.text,
+        'no_handphone': _noHandphoneController.text,
+        'alamat': _alamatController.text,
+        'password': _passwordController.text,
+        'password_confirmation': _confirmPasswordController.text,
+        'device_code': deviceCode ?? 'unknown', // Kirim device_code
+      };
 
-    // Panggil metode postRequest dari ApiService
-    final response = await ApiService.postRequest('register', headers, body);
+      // Header untuk permintaan
+      final headers = {
+        'Content-Type': 'application/json',
+      };
 
-    setState(() {
-      isLoading = false;
-    });
+      // Panggil API register menggunakan ApiService
+      final response = await ApiService.postRequest('register', headers, body);
 
-    if (response.statusCode == 201) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Registration successful'),
-        ),
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const SignInScreen(),
-        ),
-      );
-    } else {
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
       setState(() {
-        errorMessage = responseData['message'] ?? 'Registration failed';
+        isLoading = false;
       });
+
+      if (response.statusCode == 201) {
+        // Jika registrasi berhasil, tampilkan pesan sukses
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registration successful'),
+          ),
+        );
+
+        // Arahkan ke halaman login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SignInScreen(),
+          ),
+        );
+      } else {
+        // Menangani error jika registrasi gagal
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        final String error = responseData['error'] ?? 'Registration failed';
+
+        // Cek jika perangkat sudah terdaftar pada akun lain
+        if (error.contains('linked to another device')) {
+          _showAlertDialog('Registration Failed', 'This account is already linked to another device.');
+        }
+        // Cek jika perangkat sudah terdaftar untuk karyawan lain
+        else if (error.contains('Perangkat ini sudah terdaftar untuk karyawan lain')) {
+          _showAlertDialog('Registration Failed', 'Perangkat ini sudah terdaftar untuk karyawan lain.');
+        }
+        // Menampilkan error lain
+        else {
+          _showAlertDialog('Registration Failed', error);
+        }
+      }
+    } catch (e) {
+      // Tangani error jika request gagal
+      setState(() {
+        isLoading = false;
+      });
+      _showAlertDialog('Error', 'Terjadi kesalahan. Coba lagi nanti.');
     }
   } else if (!agreePersonalData) {
+    // Jika pengguna belum setuju dengan pengolahan data pribadi
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Please agree to the processing of personal data'),
@@ -87,6 +144,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 }
+
 
   @override
   Widget build(BuildContext context) {

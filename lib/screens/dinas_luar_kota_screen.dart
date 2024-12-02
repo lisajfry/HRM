@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hrm/api/dinasluarkota_service.dart';
 import 'package:hrm/model/dinasluarkota.dart';
 import 'package:hrm/screens/add_dinas_luar_kota_screen.dart';
+import 'package:intl/intl.dart'; // Import DateFormat
 
 class DinasLuarKotaScreen extends StatefulWidget {
   @override
@@ -39,7 +40,7 @@ class _DinasLuarKotaScreenState extends State<DinasLuarKotaScreen> {
 
   void _refreshData() {
     setState(() {
-      futureDinasLuarKota = _fetchDinasLuarKota();
+      futureDinasLuarKota = _fetchDinasLuarKota(); // Refresh the data
     });
   }
 
@@ -65,6 +66,11 @@ class _DinasLuarKotaScreenState extends State<DinasLuarKotaScreen> {
               itemCount: snapshot.data!.length,
               itemBuilder: (BuildContext context, int index) {
                 final dinas = snapshot.data![index];
+                // Format tanggal tanpa jam
+                final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
+                final String formattedTglBerangkat = dateFormat.format(dinas.tglBerangkat);
+                final String formattedTglKembali = dateFormat.format(dinas.tglKembali);
+
                 return Card(
                   elevation: 4,
                   margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -81,13 +87,13 @@ class _DinasLuarKotaScreenState extends State<DinasLuarKotaScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Tanggal Berangkat: ${dinas.tglBerangkat}',
-                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                    '$formattedTglBerangkat - $formattedTglKembali', // Tampilkan tanggal tanpa jam
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                                  Text(
-                                    'Tanggal Kembali: ${dinas.tglKembali}',
-                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                                  ),
+                                  SizedBox(height: 2),
                                 ],
                               ),
                             ),
@@ -95,18 +101,17 @@ class _DinasLuarKotaScreenState extends State<DinasLuarKotaScreen> {
                               children: [
                                 IconButton(
                                   icon: Icon(Icons.edit, color: Colors.blue),
-                                  onPressed: () async {
-                                    bool? isEdited = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => DinasLuarKotaForm(dinas: dinas),
-                                      ),
-                                    );
-                                    if (isEdited == true) {
-                                      _refreshData();
-                                    }
-                                  },
-                                ),
+                                  onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => DinasLuarKotaForm(dinas: dinas)),
+                                  ).then((_) {
+                                    setState(() {
+                                      futureDinasLuarKota = _fetchDinasLuarKota(); // Refresh data setelah kembali
+                                    });
+                                  });
+                                },
+                              ),
                                 IconButton(
                                   icon: Icon(Icons.delete, color: Colors.red),
                                   onPressed: () async {
@@ -142,14 +147,17 @@ class _DinasLuarKotaScreenState extends State<DinasLuarKotaScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          bool? isAdded = await Navigator.push(
+        onPressed: () {
+          Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => DinasLuarKotaForm()),
-          );
-          if (isAdded == true) {
-            _refreshData();
-          }
+          ).then((_) {
+            // Refresh data setelah kembali
+            setState(() {
+              futureDinasLuarKota = _fetchDinasLuarKota();
+            });
+          });
+        
         },
         child: Icon(Icons.add),
         tooltip: 'Tambah Dinas Luar Kota',

@@ -59,6 +59,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
             },
           ),
           title: Text('Payroll Summary'),
+          
           backgroundColor: Theme.of(context).colorScheme.primary,
         ),
         body: isLoading

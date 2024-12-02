@@ -3,7 +3,9 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:hrm/api/api_service.dart';
+import 'package:hrm/model/absen.dart';
+import 'package:hrm/api/absensi_service.dart';
+import 'package:hrm/utils/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
@@ -31,8 +33,8 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
   late GoogleMapController mapController;
   LatLng _initialPosition = LatLng(-6.200000, 106.816666); // Jakarta sebagai default
   LatLng? _currentPosition;
-  LatLng _officeLocation = LatLng(-7.635828594663169, 111.54255116931424); // Lokasi kantor
-  double _radius = 100.0; // Radius dalam meter
+  LatLng _officeLocation = LatLng(-7.63682815361972, 111.54260480768411); // Lokasi kantor
+  double _radius = 400.0; // Radius dalam meter
   StreamSubscription<Position>? _positionStream;
 
   @override
@@ -67,6 +69,7 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
       setState(() {
         _currentPosition = LatLng(position.latitude, position.longitude);
         _initialPosition = _currentPosition!;
+        print('Current Position: $_currentPosition');
         // Pindahkan kamera ke lokasi terbaru
         mapController.animateCamera(
           CameraUpdate.newLatLng(_currentPosition!),
@@ -79,94 +82,94 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
     mapController = controller;
   }
 
-  Future<void> _submitAttendance(BuildContext context) async {
+
+
+
+
+
+// Update the 'handleAbsenMasuk' function
+Future<void> handleAbsenMasuk() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
   final String? token = prefs.getString('access_token');
+  
+  print('Token: $token'); // Debug Token
+
   if (token == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Token tidak ditemukan. Silakan login kembali.')),
+      SnackBar(content: Text('Token tidak ditemukan. Silakan login kembali.'))
     );
     return;
   }
 
-  final profileResponse = await ApiService.getRequest(
-    'profile',
-    {'Authorization': 'Bearer $token'},
+  
+
+  // Waktu sekarang
+  final DateTime now = DateTime.now();
+  final String formattedTime = DateFormat('HH:mm:ss').format(now);
+  final String formattedDate = DateFormat('yyyy-MM-dd').format(now);
+  print('Waktu sekarang: $formattedTime | Tanggal: $formattedDate'); // Debug Waktu
+
+  // Lokasi pengguna
+  Position? position;
+  try {
+    position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best);
+    print('Lokasi saat ini: ${position.latitude}, ${position.longitude}'); // Debug Lokasi
+  } catch (e) {
+    print('Gagal mendapatkan lokasi: $e');
+  }
+
+  // Validasi jarak
+  double distance = Geolocator.distanceBetween(
+    position!.latitude,
+    position.longitude,
+    _officeLocation.latitude,
+    _officeLocation.longitude,
   );
+  print('Jarak ke kantor: $distance meter'); // Debug Jarak
 
-  if (profileResponse.statusCode == 200) {
-    final karyawanData = json.decode(profileResponse.body)['profile'];
-    final String idKaryawan = karyawanData['id'].toString();
-    final DateTime now = DateTime.now();
-    final String formattedTime = DateFormat('HH:mm:ss').format(now);
-    final String formattedDate = DateFormat('yyyy-MM-dd').format(now);
-
-    Position? position;
-    try {
-      position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.best);
-    } catch (e) {
-      print('Failed to get location: $e');
-    }
-
-    // Validasi jarak user dengan kantor
-    double distance = Geolocator.distanceBetween(
-      position!.latitude,
-      position.longitude,
-      _officeLocation.latitude,
-      _officeLocation.longitude,
-    );
-
-    if (distance > _radius) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Anda berada di luar jangkauan kantor. Absensi gagal.')),
-      );
-      return; // Gagal absen
-    }
-
-    // Jika dalam radius, lanjutkan proses absensi
-    double? latitude = position.latitude;
-    double? longitude = position.longitude;
-
-    final endpoint = widget.action == 'Clock In' ? 'absensi/masuk' : 'absensi/keluar';
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-
-    // Mengirimkan waktu yang sesuai untuk Clock In atau Clock Out
-    final body = {
-      'id_karyawan': idKaryawan,
-      'tanggal': formattedDate,
-      if (widget.action == 'Clock In') 'jam_masuk': formattedTime,
-      if (widget.action == 'Clock Out') 'jam_keluar': formattedTime,
-      if (widget.action == 'Clock In') 'foto_masuk': await getFileAsBase64(widget.pickedImage?.path),
-      if (widget.action == 'Clock Out') 'foto_keluar': await getFileAsBase64(widget.pickedImage?.path),
-      if (widget.action == 'Clock In') 'latitude_masuk': latitude,
-      if (widget.action == 'Clock In') 'longitude_masuk': longitude,
-      if (widget.action == 'Clock Out') 'latitude_keluar': latitude,
-      if (widget.action == 'Clock Out') 'longitude_keluar': longitude,
-    };
-
-    final attendanceResponse = await ApiService.postRequest(endpoint, headers, body);
-
-    if (attendanceResponse.statusCode == 201 || attendanceResponse.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Absensi berhasil dicatat')),
-      );
-      _showData(context, body);
-    } else {
-      print('Response body: ${attendanceResponse.body}');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mencatat absensi')),
-      );
-    }
-  } else {
+  if (distance > _radius) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Gagal memuat data karyawan')),
+      SnackBar(content: Text('Anda berada di luar jangkauan kantor. Absensi gagal.'))
+    );
+    return;
+  }
+
+  // Tentukan data untuk dikirim ke AbsensiService
+  final Map<String, dynamic> absensiData = {
+    'tanggal': formattedDate,
+    'jam_masuk': formattedTime,
+    'foto_masuk': await getFileAsBase64(widget.pickedImage?.path),
+    'lokasi_masuk': {
+      'latitude': position.latitude,
+      'longitude': position.longitude,
+    },
+  };
+
+  print('Absensi Data: $absensiData'); // Debug Data
+
+  // Panggil AbsensiService untuk absen masuk
+  try {
+    final absensiService = AbsensiService();
+    // Panggil absensiService.absenMasuk dengan data absensi
+    Absensi absensi = await absensiService.absenMasuk(absensiData);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Absensi berhasil dicatat: ${absensi.tanggal}')),
+    );
+     _showData(context, {
+      'Tanggal': absensi.tanggal,
+      'Jam Masuk': absensi.jamMasuk,
+    });
+  } catch (e) {
+    print('Error: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Gagal mencatat absensi')),
     );
   }
 }
+
+
 
   Future<String?> getFileAsBase64(String? filePath) async {
     if (filePath == null) return null;
@@ -235,14 +238,13 @@ Widget build(BuildContext context) {
             ),
             SizedBox(height: 20),
             Text(
-              widget.action == 'Clock In'
-                  ? 'Jam Masuk: ${widget.time}'
-                  : 'Jam Keluar: ${widget.time}',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+  widget.action == 'Clock In' ? 'Jam Masuk: ${widget.time}' : '',
+  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+),
+
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () => _submitAttendance(context),
+              onPressed: () => handleAbsenMasuk(),
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 32.0),
               ),

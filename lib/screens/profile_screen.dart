@@ -19,6 +19,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool isLoading = true;
   final ImagePicker _picker = ImagePicker();
   File? _avatar;
+  List<Map<String, dynamic>> jabatanList = [];
+
+  String getJabatanNama(int? jabatanId) {
+  if (jabatanId == null || jabatanList.isEmpty) {
+    return 'Jabatan tidak tersedia';
+  }
+
+  final jabatan = jabatanList.firstWhere(
+    (j) => j['id'] == jabatanId,
+    orElse: () => {'jabatan': 'Jabatan tidak tersedia'},
+  );
+
+  return jabatan['jabatan'];
+}
+
+  
 
   @override
   void initState() {
@@ -26,6 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadSavedAvatar();
     _fetchKaryawanData();
   }
+
 
   
 
@@ -204,17 +221,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const Divider(height: 20, thickness: 1, color: Colors.grey),
           const SizedBox(height: 10),
           Row(
-            children: [
-              const Icon(Icons.work, color: Colors.blue), // Icon untuk Jabatan
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Jabatan: ${karyawanData?['nama_jabatan'] ?? 'Jabatan tidak tersedia'}',
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-            ],
-          ),
+  children: [
+    const Icon(Icons.work, color: Colors.blue), // Icon untuk Jabatan
+    const SizedBox(width: 10),
+    Expanded(
+      child: Text(
+        'Jabatan: ${getJabatanNama(karyawanData?['jabatan_id'])}',
+        style: const TextStyle(fontSize: 16),
+      ),
+    ),
+  ],
+),
+
           const Divider(height: 20, thickness: 1, color: Colors.grey),
           const SizedBox(height: 10),
           Row(
@@ -305,7 +323,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   );
 }
 
- Future<void> _fetchKaryawanData() async {
+  Future<void> _fetchKaryawanData() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
   final String? token = prefs.getString('access_token');
 
@@ -321,34 +339,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Header untuk permintaan
     final headers = {
       'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json', // Opsional, tergantung kebutuhan API
+      'Content-Type': 'application/json',
     };
 
     final response = await ApiService.getRequest('profile', headers);
-print(response.body);  // Log untuk melihat respons dari server
+    final jabatanResponse = await ApiService.getRequest('jabatan', headers); // Ambil data jabatan
 
+    if (response.statusCode == 200 && jabatanResponse.statusCode == 200) {
+  final profileData = json.decode(response.body)['profile'];
+  final jabatanData = json.decode(jabatanResponse.body);
 
-    if (response.statusCode == 200) {
   setState(() {
-    karyawanData = json.decode(response.body)['profile'];
-    print(karyawanData);  // Tambahkan ini untuk memeriksa data
-    
-    // Simpan avatar jika ada
-    if (karyawanData?['avatar'] != null && karyawanData!['avatar'].isNotEmpty) {
-      final avatarUrl = '${ApiService.baseUrl}storage/${karyawanData!['avatar']}';
-      prefs.setString('avatar_path', avatarUrl); // Simpan URL avatar
+    karyawanData = profileData;
+    jabatanList = List<Map<String, dynamic>>.from(jabatanData); // Gantikan list default
+    isLoading = false;
+  });
+
+    } else {
+      _showMessage('Failed to fetch profile or jabatan data', isError: true);
+      setState(() {
+        isLoading = false;
+      });
     }
-    
-    isLoading = false;
-  });
-} else {
-  _showMessage('Failed to fetch profile data', isError: true);
-  setState(() {
-    isLoading = false;
-  });
-}
-
-    
   } catch (e) {
     _showMessage('Error fetching data: $e', isError: true);
     setState(() {
@@ -356,6 +368,7 @@ print(response.body);  // Log untuk melihat respons dari server
     });
   }
 }
+
 
   Future<void> _updateProfile(Map<String, String> updatedData) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();

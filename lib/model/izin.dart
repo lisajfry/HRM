@@ -22,7 +22,7 @@ class Izin {
   factory Izin.fromJson(Map<String, dynamic> json) {
     return Izin(
       id: json['id'] ?? 0, // Menambahkan default value
-      idKaryawan: json['id_karyawan'] ?? 0, // Menambahkan default value
+      idKaryawan: json['id_karyawan'] ?? 0, // Menambahkan default y
       tgl_mulai: json['tgl_mulai'] ?? '',
       tgl_selesai: json['tgl_selesai'] ?? '',
       alasan:json['alasan']?? '',

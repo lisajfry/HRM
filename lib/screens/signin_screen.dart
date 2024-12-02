@@ -38,7 +38,28 @@ class _SignInScreenState extends State<SignInScreen> {
   return androidInfo.id; // Gunakan androidInfo.id sebagai pengganti androidId
 }
 
- Future<void> _signIn() async {
+
+void _showAlertDialog(String title, String message) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+Future<void> _signIn() async {
   if (_formSignInKey.currentState!.validate()) {
     setState(() {
       _isLoading = true;
@@ -83,14 +104,13 @@ class _SignInScreenState extends State<SignInScreen> {
         );
       } else {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        final String message =
-            responseData['message'] ?? 'Login gagal, Autentikasi salah.';
+        final String error = responseData['error'] ?? 'Login failed';
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-          ),
-        );
+        if (error.contains('linked to another device')) {
+          _showAlertDialog('Login Failed', 'This account is already linked to another device.');
+        } else {
+          _showAlertDialog('Login Failed', error);
+        }
       }
     } catch (e) {
       setState(() {
@@ -99,7 +119,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Terjadi kesalahan. Coba lagi nanti."),
+          content: Text("An error occurred. Please try again later."),
         ),
       );
     }

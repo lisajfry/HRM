@@ -3,6 +3,8 @@ import 'package:hrm/api/izin_service.dart';
 import 'package:hrm/model/izin.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hrm/screens/Add_izin.dart'; // Pastikan untuk mengimpor IzinForm
+import 'package:hrm/screens/home_screen.dart'; // Pastikan untuk mengimpor IzinForm
+
 
 class IzinScreen extends StatefulWidget {
   @override
@@ -10,13 +12,48 @@ class IzinScreen extends StatefulWidget {
 }
 
 class _IzinScreenState extends State<IzinScreen> {
+  final IzinService _izinService = IzinService();
   late Future<List<Izin>> futureIzin;
+  List<Izin> _izinList = [];
+  bool _isLoading = true;
+  int? _selectedMonth;
+  int? _selectedYear;
+
+  final List<int> months = List.generate(12, (index) => index + 1);
+  final List<int> years = List.generate(10, (index) => 2020 + index);
 
   @override
   void initState() {
     super.initState();
+    _loadIzin();
     futureIzin = _fetchIzin(); // Panggil fungsi untuk mendapatkan izin
   }
+
+  Future<void> _loadIzin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final izin = await _izinService.getIzin(
+        bulan: _selectedMonth,
+        tahun: _selectedYear,
+      );
+      setState(() {
+        _izinList = izin;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memuat data lembur')),
+      );
+    }
+  }
+
+  
 
   Future<List<Izin>> _fetchIzin() async {
     try {

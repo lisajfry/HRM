@@ -1,4 +1,5 @@
-import 'dart:convert';
+import 'dart:convert'; // Untuk base64Decode
+import 'dart:typed_data'; // Untuk Uint8List
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hrm/api/api_service.dart'; // Import ApiService yang sudah dibuat
@@ -133,6 +134,30 @@ class _RekapAbsensiScreenState extends State<RekapAbsensiScreen> {
                                   ),
                                 ],
                               ),
+                              SizedBox(height: 8),
+                              
+                              // Menampilkan foto masuk jika tersedia dan merupakan Base64
+                              if (absensi['foto_masuk'] != null && absensi['foto_masuk'] != '')
+                                GestureDetector(
+                                  onTap: () {
+                                    // Tampilkan foto besar saat di-tap
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => Dialog(
+                                        child: Image.memory(
+                                          base64Decode(absensi['foto_masuk']),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Image.memory(
+                                    base64Decode(absensi['foto_masuk']),
+                                    width: 100,
+                                    height: 100,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
                             ],
                           ),
                         ),

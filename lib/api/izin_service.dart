@@ -5,19 +5,29 @@ import 'package:hrm/model/izin.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class IzinService {
-  final String apiUrl = 'http://192.168.200.27:8000/api';
+  final String apiUrl = 'http://192.168.200.33:8000/api';
 
   Future<String?> getToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('access_token');
   }
 
-  Future<List<Izin>> getIzin() async {
+  
+
+    Future<List<Izin>> getIzin({int? bulan, int? tahun}) async {
     String? token = await getToken();
+
 
     if (token == null) {
       throw Exception('Token tidak ditemukan. Pastikan Anda sudah login.');
     }
+
+    // Build the query parameters for the API
+    String url = '$apiUrl/izin';
+    if (bulan != null && tahun != null) {
+      url = '$url?bulan=$bulan&tahun=$tahun'; // Adding query params for month and year
+    }
+
 
     final response = await http.get(
       Uri.parse('$apiUrl/izin'),
