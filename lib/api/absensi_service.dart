@@ -11,6 +11,33 @@ class AbsensiService {
     return prefs.getString('access_token');
   }
 
+
+  Future<List<Absensi>> getAbsensi() async {
+    String? token = await getToken();
+    print('Token yang digunakan: $token');
+
+
+    if (token == null) {
+      throw Exception('Token tidak ditemukan. Pastikan Anda sudah login.');
+    }
+
+    final response = await http.get(
+      Uri.parse('${baseUrl}absensi'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      List jsonResponse = json.decode(response.body);
+      
+      print('Response: ${response.body}');
+      return jsonResponse.map((data) => Absensi.fromJson(data)).toList();
+      
+    } else {
+      throw Exception('Failed to load tasks: ${response.body}');
+    }
+  }
+
+
   // Absen Masuk
   Future<Absensi> absenMasuk(Map<String, dynamic> data) async {
     String? token = await getToken();
@@ -31,6 +58,8 @@ class AbsensiService {
           'tanggal': data['tanggal'],
           'jam_masuk': data['jam_masuk'],
           'foto_masuk': data['foto_masuk'],
+          'latitude_masuk': data['latitude_masuk'],
+          'longitude_masuk': data['longitude_masuk'],
           'status': data['status'],
         }),
       );
@@ -45,7 +74,5 @@ class AbsensiService {
       rethrow;
     }
   }
-}
 
-
-
+  }

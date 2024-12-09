@@ -76,7 +76,6 @@ Widget buildActionButtons(BuildContext context) {
                 MaterialPageRoute(
                   builder: (context) => FaceRecognitionScreen(
                     action: 'Clock In',
-                    pickedImage: pickedFile,
                     time: currentTime,
                     date: currentDate,
                   ),
@@ -94,50 +93,10 @@ Widget buildActionButtons(BuildContext context) {
         ),
       ),
       SizedBox(width: 10),
-      Expanded(
-        child: ElevatedButton(
-          onPressed: () async {
-            try {
-              final picker = ImagePicker();
-              final pickedFile = await picker.pickImage(source: ImageSource.camera);
-              
-              if (pickedFile != null) {
-                String currentTime = DateFormat('HH:mm').format(DateTime.now());
-                String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => FaceRecognitionScreen(
-                      action: 'Clock Out',
-                      pickedImage: pickedFile,
-                      time: currentTime,
-                      date: currentDate,
-                    ),
-                  ),
-                );
-              } else {
-                throw 'Image not selected';
-              }
-            } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Failed to clock out: $e')),
-              );
-            }
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.arrow_left),
-              Text('Clock Out'),
-            ],
-          ),
-        ),
-      ),
-    ],
+        ],
   );
 }
-Widget buildAttendanceSummary(BuildContext context) {
+  /*Widget buildAttendanceSummary(BuildContext context) {
   final totalLembur = Provider.of<TotalLemburProvider>(context).totalLembur; // Mengambil total lembur dari provider
   return Card(
     shape: RoundedRectangleBorder(
@@ -158,6 +117,7 @@ Widget buildAttendanceSummary(BuildContext context) {
     ),
   );
 }
+*/
 
 // Fungsi untuk membangun kartu informasi
 Widget _buildInfoCard(String title, String count, IconData icon, Color iconColor, BuildContext context) {

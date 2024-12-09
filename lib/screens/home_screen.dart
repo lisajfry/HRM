@@ -8,6 +8,8 @@ import 'package:hrm/screens/izin_screen.dart';
 import 'package:hrm/screens/rekap_absensi.dart';
 import 'package:hrm/screens/dinas_luar_kota_screen.dart';
 import 'package:hrm/screens/payroll_screen.dart';
+import 'package:hrm/screens/task_screen.dart';
+import 'package:hrm/screens/kasbon_screen.dart';
 import 'package:hrm/screens/navigation.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -78,23 +80,36 @@ class HomeScreenContent extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 5,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildLayananItem('Lembur', Icons.timer, context),
-                      _buildLayananItem('Payroll', Icons.attach_money, context),
-                      _buildLayananItem('Riwayat Absensi', Icons.description, context),
-                      _buildLayananItem('Kinerja', Icons.task, context),
-                    ],
-                  ),
-                ),
-              ),
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(10),
+  ),
+  elevation: 5,
+  child: Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildLayananItem('Lembur', Icons.timer, context),
+            _buildLayananItem('Payroll', Icons.attach_money, context),
+            _buildLayananItem('Riwayat Absensi', Icons.description, context),
+          ],
+        ),
+        SizedBox(height: 16), // Optional: Add spacing between the rows
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildLayananItem('Tasks', Icons.task, context),
+            _buildLayananItem('Dokumen', Icons.task, context),
+            _buildLayananItem('Kasbon', Icons.attach_money, context),
+          ],
+        ),
+      ],
+    ),
+  ),
+),
+
               const SizedBox(height: 20),
               SizedBox(
                 height: 250,  // Pastikan grafik tetap sesuai ukuran
@@ -147,6 +162,16 @@ class HomeScreenContent extends StatelessWidget {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => RekapAbsensiScreen()),
+          );
+          } else if (title == 'Tasks') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => TaskScreen()),
+          );
+          } else if (title == 'Kasbon') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => KasbonPage()),
           );
         } else if (title == 'Dinas Luar Kota') {
           Navigator.pushReplacement(

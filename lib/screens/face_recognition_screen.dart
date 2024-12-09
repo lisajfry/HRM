@@ -3,24 +3,21 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:hrm/model/absen.dart';
-import 'package:hrm/api/absensi_service.dart';
-import 'package:hrm/utils/utils.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
+import 'package:camera/camera.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
+import 'package:hrm/api/absensi_service.dart'; // Sesuaikan dengan path yang sesuai
+
 
 class FaceRecognitionScreen extends StatefulWidget {
   final String action;
-  final XFile? pickedImage;
   final String time;
   final String date;
 
   const FaceRecognitionScreen({
     Key? key,
     required this.action,
-    required this.pickedImage,
     required this.time,
     required this.date,
   }) : super(key: key);
@@ -31,26 +28,59 @@ class FaceRecognitionScreen extends StatefulWidget {
 
 class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
   late GoogleMapController mapController;
-  LatLng _initialPosition = LatLng(-6.200000, 106.816666); // Jakarta sebagai default
+  LatLng _initialPosition = LatLng(-6.200000, 106.816666);
   LatLng? _currentPosition;
-  LatLng _officeLocation = LatLng(-7.63682815361972, 111.54260480768411); // Lokasi kantor
-  double _radius = 400.0; // Radius dalam meter
+  LatLng _officeLocation = LatLng(-7.63680688625805, 111.54267990949353);
+  double _radius = 400.0;
   StreamSubscription<Position>? _positionStream;
+
+  late CameraController _cameraController;
+  late Future<void> _initializeControllerFuture;
+  XFile? _capturedImage;
 
   @override
   void initState() {
     super.initState();
     _checkLocationPermission();
     _startLocationUpdates();
+    _initializeCamera();
   }
 
   @override
   void dispose() {
-    _positionStream?.cancel(); // Jangan lupa untuk menghentikan stream saat widget dihapus
+    _positionStream?.cancel();
+    _cameraController.dispose();
     super.dispose();
   }
 
-  // Memeriksa izin lokasi
+
+  void _showData(BuildContext context, Map<String, dynamic> data) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Data Absensi'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: data.entries.map((entry) {
+              return Text('${entry.key}: ${entry.value}');
+            }).toList(),
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
   Future<void> _checkLocationPermission() async {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
@@ -58,19 +88,16 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
     }
   }
 
-  // Mulai melacak perubahan lokasi
   void _startLocationUpdates() {
     _positionStream = Geolocator.getPositionStream(
       locationSettings: LocationSettings(
-        accuracy: LocationAccuracy.best, // Menggunakan akurasi terbaik
-        distanceFilter: 10, // Update jika ada perubahan jarak lebih dari 10 meter
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 10,
       ),
     ).listen((Position position) {
       setState(() {
         _currentPosition = LatLng(position.latitude, position.longitude);
         _initialPosition = _currentPosition!;
-        print('Current Position: $_currentPosition');
-        // Pindahkan kamera ke lokasi terbaru
         mapController.animateCamera(
           CameraUpdate.newLatLng(_currentPosition!),
         );
@@ -82,17 +109,41 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
     mapController = controller;
   }
 
+  Future<void> _initializeCamera() async {
+    final cameras = await availableCameras();
+    final frontCamera = cameras.firstWhere(
+      (camera) => camera.lensDirection == CameraLensDirection.front,
+    );
 
+    _cameraController = CameraController(
+      frontCamera,
+      ResolutionPreset.medium,
+    );
 
+    _initializeControllerFuture = _cameraController.initialize();
+    setState(() {});
+  }
 
+  Future<void> _capturePhoto() async {
+    try {
+      await _initializeControllerFuture;
+      final XFile photo = await _cameraController.takePicture();
+      setState(() {
+        _capturedImage = photo;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Foto berhasil diambil')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mengambil foto')),
+      );
+    }
+  }
 
-
-// Update the 'handleAbsenMasuk' function
-Future<void> handleAbsenMasuk() async {
+  Future<void> handleAbsenMasuk() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
   final String? token = prefs.getString('access_token');
-  
-  print('Token: $token'); // Debug Token
 
   if (token == null) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -101,75 +152,69 @@ Future<void> handleAbsenMasuk() async {
     return;
   }
 
-  
-
-  // Waktu sekarang
   final DateTime now = DateTime.now();
   final String formattedTime = DateFormat('HH:mm:ss').format(now);
   final String formattedDate = DateFormat('yyyy-MM-dd').format(now);
-  print('Waktu sekarang: $formattedTime | Tanggal: $formattedDate'); // Debug Waktu
 
-  // Lokasi pengguna
   Position? position;
   try {
     position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.best);
-    print('Lokasi saat ini: ${position.latitude}, ${position.longitude}'); // Debug Lokasi
   } catch (e) {
-    print('Gagal mendapatkan lokasi: $e');
-  }
-
-  // Validasi jarak
-  double distance = Geolocator.distanceBetween(
-    position!.latitude,
-    position.longitude,
-    _officeLocation.latitude,
-    _officeLocation.longitude,
-  );
-  print('Jarak ke kantor: $distance meter'); // Debug Jarak
-
-  if (distance > _radius) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Anda berada di luar jangkauan kantor. Absensi gagal.'))
+      SnackBar(content: Text('Gagal mendapatkan lokasi: $e')),
     );
     return;
   }
 
-  // Tentukan data untuk dikirim ke AbsensiService
+  double distance = Geolocator.distanceBetween(
+    position.latitude,
+    position.longitude,
+    _officeLocation.latitude,
+    _officeLocation.longitude,
+  );
+
+  if (distance > _radius) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Anda berada di luar jangkauan kantor. Absensi gagal.')),
+    );
+    return;
+  }
+
+  if (_capturedImage == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Foto tidak tersedia. Ambil foto terlebih dahulu.')),
+    );
+    return;
+  }
+
   final Map<String, dynamic> absensiData = {
-    'tanggal': formattedDate,
-    'jam_masuk': formattedTime,
-    'foto_masuk': await getFileAsBase64(widget.pickedImage?.path),
-    'lokasi_masuk': {
-      'latitude': position.latitude,
-      'longitude': position.longitude,
-    },
-  };
+  'tanggal': formattedDate,
+  'jam_masuk': formattedTime,
+  'foto_masuk': await getFileAsBase64(_capturedImage?.path),
+  'latitude_masuk': position.latitude, // Tambahkan latitude
+  'longitude_masuk': position.longitude, // Tambahkan longitude
+  
+};
 
-  print('Absensi Data: $absensiData'); // Debug Data
 
-  // Panggil AbsensiService untuk absen masuk
   try {
     final absensiService = AbsensiService();
-    // Panggil absensiService.absenMasuk dengan data absensi
-    Absensi absensi = await absensiService.absenMasuk(absensiData);
+    final absensi = await absensiService.absenMasuk(absensiData);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Absensi berhasil dicatat: ${absensi.tanggal}')),
     );
-     _showData(context, {
-      'Tanggal': absensi.tanggal,
-      'Jam Masuk': absensi.jamMasuk,
+    _showData(context, {
+  'Tanggal': absensi.tanggal,
+  'Jam Masuk': absensi.jamMasuk,
     });
   } catch (e) {
-    print('Error: $e');
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Gagal mencatat absensi')),
+      SnackBar(content: Text('Gagal mencatat absensi: $e')),
     );
   }
 }
-
-
 
   Future<String?> getFileAsBase64(String? filePath) async {
     if (filePath == null) return null;
@@ -177,81 +222,42 @@ Future<void> handleAbsenMasuk() async {
     return base64Encode(bytes);
   }
 
-  void _showData(BuildContext context, Map<String, dynamic> data) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Data Absensi'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: data.entries.map((entry) {
-                return Text('${entry.key}: ${entry.value != null ? entry.value : 'null'}');
-              }).toList(),
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-@override
+  @override
+  @override
 Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
       title: Text('Catat Kehadiran'),
     ),
     body: SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(height: 20),
-            // Pindahkan Google Map ke atas gambar
-            _buildGoogleMap(),
-            SizedBox(height: 20),
-            Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
+      child: Column(
+        children: [
+          _buildGoogleMap(),
+          SizedBox(height: 20),
+          _buildCameraPreview(),
+          SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: () => _capturePhoto(),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  backgroundColor: Colors.orangeAccent,
+                ),
+                child: Text('Ambil Foto'),
               ),
-              child: widget.pickedImage != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.file(
-                        File(widget.pickedImage!.path),
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                  : Center(child: Text('Face Recognition Placeholder')),
-            ),
-            SizedBox(height: 20),
-            Text(
-  widget.action == 'Clock In' ? 'Jam Masuk: ${widget.time}' : '',
-  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-),
-
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => handleAbsenMasuk(),
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 32.0),
+              ElevatedButton(
+                onPressed: () => handleAbsenMasuk(),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  backgroundColor: Colors.blueAccent,
+                ),
+                child: Text(widget.action),
               ),
-              child: Text(widget.action, style: TextStyle(fontSize: 16)),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     ),
   );
@@ -271,14 +277,14 @@ Widget build(BuildContext context) {
             ? {
                 Marker(
                   markerId: MarkerId('currentLocation'),
-                  position: _currentPosition!,  // Lokasi user
-                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),  // Warna biru untuk lokasi user
+                  position: _currentPosition!,
+                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
                   infoWindow: InfoWindow(title: 'Lokasi Anda'),
                 ),
                 Marker(
                   markerId: MarkerId('officeLocation'),
-                  position: _officeLocation,  // Lokasi kantor
-                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),  // Warna merah untuk kantor
+                  position: _officeLocation,
+                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
                   infoWindow: InfoWindow(title: 'Kantor'),
                 ),
               }
@@ -286,14 +292,43 @@ Widget build(BuildContext context) {
         circles: {
           Circle(
             circleId: CircleId("radius"),
-            center: _officeLocation,  // Lokasi kantor
-            radius: _radius,  // Radius dalam meter
-            fillColor: Colors.blueAccent.withOpacity(0.5),  // Warna lingkaran
-            strokeColor: Colors.blueAccent,  // Warna garis lingkaran
-            strokeWidth: 2,  // Ketebalan garis lingkaran
+            center: _officeLocation,
+            radius: _radius,
+            fillColor: Colors.blueAccent.withOpacity(0.5),
+            strokeColor: Colors.blueAccent,
+            strokeWidth: 2,
           ),
         },
       ),
+    );
+  }
+
+  Widget _buildCameraPreview() {
+    return Container(
+      width: double.infinity,
+      height: 200,
+      decoration: BoxDecoration(
+        color: Colors.grey[300],
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: _capturedImage != null
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.file(
+                File(_capturedImage!.path),
+                fit: BoxFit.cover,
+              ),
+            )
+          : FutureBuilder<void>(
+              future: _initializeControllerFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  return CameraPreview(_cameraController);
+                } else {
+                  return Center(child: CircularProgressIndicator());
+                }
+              },
+            ),
     );
   }
 }
